@@ -182,7 +182,7 @@ function Workspace() {
         setResourceList(imported);
         setNotice("Import complete. Files included in the backup are available locally.");
       } catch {
-        window.alert("This file is not a valid Second Brain export.");
+        window.alert("This file is not a valid export.");
       }
       event.target.value = "";
     };
@@ -192,7 +192,7 @@ function Workspace() {
   return (
     <main className="shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark">S</span><span>Second Brain</span></div>
+        <div className="brand"><span className="brand-mark">R</span><span>Ruixing Cheng</span></div>
         <div className="sidebar-section">
           <p className="eyebrow">Workspace</p>
           <button className="nav-item active"><span>⌂</span> Overview <span className="nav-count">{resourceList.length}</span></button>

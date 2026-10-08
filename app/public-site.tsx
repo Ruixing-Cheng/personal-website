@@ -11,7 +11,7 @@ export default function PublicSite() {
   return (
     <main className={`public-site ${expanded ? "preview-expanded" : ""}`}>
       <header className="public-header">
-        <div className="public-brand"><span className="brand-mark">S</span><strong>Second Brain</strong><span className="public-divider" /><span>公开资源</span></div>
+        <div className="public-brand"><span className="brand-mark">R</span><strong>Ruixing Cheng</strong><span className="public-divider" /><span>公开资源</span></div>
         <a href={toolUrl} target="_blank" rel="noreferrer" className="public-header-link">在新窗口打开 ↗</a>
       </header>
       <div className="public-layout">
