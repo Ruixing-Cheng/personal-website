@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>音程转盘 · 吉他调内音与和弦工具</title>
+  <style>
+    :root { color-scheme: light; --ink:#182220; --muted:#64716c; --line:#dce3df; --paper:#f6f8f6; --white:#fff; --green:#176b55; --green-soft:#e4f3ec; --coral:#d2634e; --coral-soft:#faeae5; --gold:#eab758; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:Inter,"PingFang SC","Microsoft YaHei",Arial,sans-serif; letter-spacing:0; }
+    button, select { font:inherit; }
+    button { cursor:pointer; }
+    button:focus-visible, select:focus-visible, .wheel:focus-visible { outline:3px solid #6aa894; outline-offset:3px; }
+    .shell { max-width:1320px; margin:auto; padding:28px 28px 48px; }
+    header { display:flex; justify-content:space-between; align-items:end; gap:24px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+    h1 { margin:0; font-size:26px; line-height:1.25; font-weight:800; }
+    .workspace { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(340px,.85fr); gap:38px; align-items:start; padding-top:26px; }
+    .wheel-area { min-width:0; }
+    .wheel-topline { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0 0 8px; }
+    .section-title { margin:0; font-size:15px; font-weight:800; }
+    .hint { color:var(--muted); font-size:12px; }
+    .wheel-wrap { max-width:620px; margin:auto; aspect-ratio:1; width:100%; }
+    .wheel { display:block; width:100%; height:100%; touch-action:none; user-select:none; }
+    .wheel .outer-label { fill:#25302c; font-size:18px; font-weight:800; pointer-events:none; }
+    .wheel .outer-label.active { fill:var(--green); }
+    .wheel .outer-label.root { fill:var(--coral); }
+    .wheel .interval-label { fill:#62736c; font-size:12px; font-weight:700; pointer-events:none; }
+    .wheel .interval-label.active { fill:#fff; }
+    .wheel .interval-label.root { fill:#fff; }
+    .wheel .sector { fill:#f7faf7; cursor:pointer; transition:fill .16s ease; }
+    .wheel .sector:hover { fill:#e7efea; }
+    .wheel .sector.selected { fill:var(--green); }
+    .wheel .sector.selected:hover { fill:#218267; }
+    .wheel .sector.selected.root { fill:var(--coral); }
+    .wheel .sector.selected.root:hover { fill:#de765f; }
+    .wheel .drag-face { cursor:grab; }
+    .wheel.dragging .drag-face { cursor:grabbing; }
+    .wheel-footer { display:flex; justify-content:center; align-items:center; gap:12px; margin-top:4px; }
+    .turn-btn { border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:6px; padding:9px 14px; min-height:38px; font-size:13px; font-weight:700; }
+    .turn-btn:hover { border-color:#9bb9a9; background:#f2faf5; }
+    .degree { min-width:50px; color:var(--muted); font-size:13px; font-weight:700; text-align:center; font-variant-numeric:tabular-nums; }
+    .panel { border-left:1px solid var(--line); padding-left:32px; min-width:0; }
+    .block { border-bottom:1px solid var(--line); padding-bottom:21px; margin-bottom:21px; }
+    .block:last-child { border:0; margin-bottom:0; }
+    .block h2 { margin:0 0 14px; font-size:15px; }
+    .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    label { display:block; color:var(--muted); font-size:12px; font-weight:700; }
+    select { width:100%; margin-top:7px; padding:10px 32px 10px 11px; border:1px solid #ccd7d0; border-radius:6px; background:#fff; color:var(--ink); min-height:42px; font-weight:700; }
+    .mode-switch { display:grid; grid-template-columns:1fr 1fr; background:#e8eeea; border-radius:7px; padding:3px; margin-bottom:14px; }
+    .mode-switch button { border:0; border-radius:5px; background:transparent; min-height:34px; color:var(--muted); font-size:13px; font-weight:800; }
+    .mode-switch button.on { background:#fff; color:var(--ink); box-shadow:0 1px 4px #1c34231c; }
+    .preset-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+    .preset { min-height:41px; padding:8px 10px; text-align:left; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); font-size:13px; font-weight:700; }
+    .preset:hover { border-color:#80ad98; }
+    .preset.on { border-color:var(--green); background:var(--green-soft); color:#12583f; }
+    .preset small { display:block; color:var(--muted); font-size:10px; font-weight:600; margin-top:2px; }
+    .preset.on small { color:#4c7964; }
+    .interval-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; }
+    .interval-btn { display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:51px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); }
+    .interval-btn strong { font-size:14px; }
+    .interval-btn span { font-size:10px; color:var(--muted); }
+    .interval-btn.on { background:var(--green); color:#fff; border-color:var(--green); }
+    .interval-btn.on span { color:#dcefe5; }
+    .interval-btn.root.on { background:var(--coral); border-color:var(--coral); }
+    .readout { background:#fff; border:1px solid var(--line); border-radius:7px; padding:17px; }
+    .readout-label { margin:0 0 10px; font-size:11px; font-weight:800; color:var(--muted); }
+    .note-list { display:flex; flex-wrap:wrap; gap:7px; min-height:42px; align-items:center; }
+    .note-pill { display:inline-flex; align-items:center; justify-content:center; min-width:39px; min-height:36px; padding:0 9px; border-radius:5px; background:var(--green-soft); color:#105a43; font-size:15px; font-weight:800; }
+    .note-pill.root { background:var(--coral-soft); color:#b64f3e; }
+    .fret-section { border-top:1px solid var(--line); padding-top:22px; margin-top:22px; }
+    .fret-header { margin-bottom:14px; }
+    .fret-scroll { width:100%; overflow-x:auto; padding-bottom:8px; }
+    .fretboard { min-width:890px; background:#fff; border:1px solid var(--line); border-radius:7px; padding:15px 16px 12px; }
+    .fret-row { display:grid; grid-template-columns:repeat(13,minmax(0,1fr)); height:42px; align-items:center; }
+    .fret-row.heading { height:29px; color:var(--muted); font-size:11px; font-weight:800; }
+    .fret-row:not(.heading) .fret-cell { border-left:2px solid #d6c9b5; }
+    .fret-cell { position:relative; height:100%; display:flex; align-items:center; justify-content:center; }
+    .fret-row:not(.heading) .fret-cell::before { position:absolute; content:""; left:0; right:0; top:50%; height:1px; background:#a7aaa4; }
+    .fret-note { z-index:1; display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:var(--green); color:#fff; font-size:11px; font-weight:800; }
+    .fret-note.root { background:var(--coral); }
+    .fret-note.muted { background:#fff; color:#b5beb8; border:1px solid #e4e9e5; }
+    .fret-legend { display:flex; align-items:center; gap:15px; margin-top:12px; color:var(--muted); font-size:11px; }
+    .legend-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; background:var(--coral); }
+    .legend-dot.other { background:var(--green); }
+    @media (max-width:920px) { .workspace { grid-template-columns:1fr; gap:20px; } .panel { border-left:0; border-top:1px solid var(--line); padding:22px 0 0; } .panel-inner { display:grid; grid-template-columns:1fr 1fr; gap:24px; } .block { margin:0; } .block:nth-child(2) { border-bottom:0; } .block:nth-child(3) { grid-column:1 / -1; } }
+    @media (max-width:600px) { .shell { padding:20px 14px 30px; } header { align-items:start; } h1 { font-size:21px; } .wheel-topline { padding:0 2px; } .hint { font-size:11px; } .panel-inner { display:block; } .block { margin-bottom:20px; } .block:nth-child(2) { border-bottom:1px solid var(--line); } .field-row { gap:8px; } .wheel-footer { gap:8px; } .turn-btn { padding:8px 10px; font-size:12px; } .interval-grid { grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; } .interval-btn { min-height:47px; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <h1>音程转盘</h1>
+    </header>
+    <main>
+      <div class="workspace">
+        <section class="wheel-area" aria-label="十二音音程转盘">
+          <div class="wheel-topline"><span class="hint">拖动内盘旋转 · 点击内圈编辑指针</span></div>
+          <div class="wheel-wrap"><svg id="wheel" class="wheel" viewBox="0 0 600 600" role="img" aria-label="可旋转的十二音音程转盘" tabindex="0"></svg></div>
+          <div class="wheel-footer"><button type="button" class="turn-btn" id="turnLeft" aria-label="逆时针旋转一个半音">↶ 逆时针</button><span class="degree" id="degree">0°</span><button type="button" class="turn-btn" id="turnRight" aria-label="顺时针旋转一个半音">顺时针 ↷</button></div>
+        </section>
+        <aside class="panel" aria-label="音程与显示设置"><div class="panel-inner">
+          <section class="block"><h2>转盘设置</h2><div class="field-row">
+            <label>根音<select id="rootSelect" aria-label="选择根音"></select></label>
+            <label>音名写法<select id="notation"><option value="sharp">升号 ♯</option><option value="flat">降号 ♭</option></select></label>
+          </div></section>
+          <section class="block"><h2>常用结构</h2><div class="mode-switch" role="tablist" aria-label="结构类别"><button type="button" id="scaleTab" role="tab" aria-selected="true" class="on">音阶</button><button type="button" id="chordTab" role="tab" aria-selected="false">和弦</button></div><div class="preset-grid" id="presets"></div></section>
+          <section class="block"><h2>自定义音程</h2><div class="interval-grid" id="intervals"></div><div style="height:15px"></div><div class="readout" aria-live="polite"><p class="readout-label">当前音集合</p><div class="note-list" id="notes"></div></div></section>
+        </div></aside>
+      </div>
+      <section class="fret-section" aria-label="吉他标准调弦指板"><div class="fret-header"><h2 class="section-title">标准调弦指板</h2></div><div class="fret-scroll"><div class="fretboard" id="fretboard"></div></div><div class="fret-legend"><span><i class="legend-dot"></i>根音</span><span><i class="legend-dot other"></i>所选音</span></div></section>
+    </main>
+  </div>
+  <script>
+    const svg = document.getElementById('wheel');
+    const names = { sharp:['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'], flat:['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'] };
+    const intervals = ['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'];
+    const semitoneNames = ['根音','小二度','大二度','小三度','大三度','纯四度','减五度','纯五度','小六度','大六度','小七度','大七度'];
+    const presets = {
+      scale:[
+        {name:'大调音阶', detail:'1 2 3 4 5 6 7', steps:[0,2,4,5,7,9,11]},
+        {name:'自然小调', detail:'1 2 ♭3 4 5 ♭6 ♭7', steps:[0,2,3,5,7,8,10]},
+        {name:'大调五声音阶', detail:'1 2 3 5 6', steps:[0,2,4,7,9]},
+        {name:'小调五声音阶', detail:'1 ♭3 4 5 ♭7', steps:[0,3,5,7,10]},
+        {name:'和声小调', detail:'1 2 ♭3 4 5 ♭6 7', steps:[0,2,3,5,7,8,11]},
+        {name:'布鲁斯音阶', detail:'1 ♭3 4 ♭5 5 ♭7', steps:[0,3,5,6,7,10]}
+      ],
+      chord:[
+        {name:'大三和弦', detail:'1 3 5', steps:[0,4,7]},
+        {name:'小三和弦', detail:'1 ♭3 5', steps:[0,3,7]},
+        {name:'减三和弦', detail:'1 ♭3 ♭5', steps:[0,3,6]},
+        {name:'增三和弦', detail:'1 3 ♭6', steps:[0,4,8]},
+        {name:'属七和弦', detail:'1 3 5 ♭7', steps:[0,4,7,10]},
+        {name:'大七和弦', detail:'1 3 5 7', steps:[0,4,7,11]},
+        {name:'小七和弦', detail:'1 ♭3 5 ♭7', steps:[0,3,7,10]},
+        {name:'挂四和弦', detail:'1 4 5', steps:[0,5,7]}
+      ]
+    };
+    const state = {root:0, notation:'sharp', mode:'scale', preset:'大调音阶', selected:new Set(presets.scale[0].steps)};
+    const $ = id => document.getElementById(id);
+    const mod = n => (n % 12 + 12) % 12;
+    const point = (r, a) => ({x:300+r*Math.sin(a), y:300-r*Math.cos(a)});
+    const angle = i => i*Math.PI/6;
+    const polygon = (inner, outer, start, end) => {
+      const a=point(inner,start), b=point(outer,start), c=point(outer,end), d=point(inner,end);
+      return `M ${a.x} ${a.y} L ${b.x} ${b.y} A ${outer} ${outer} 0 0 1 ${c.x} ${c.y} L ${d.x} ${d.y} A ${inner} ${inner} 0 0 0 ${a.x} ${a.y} Z`;
+    };
+    const el = (tag, attrs={}) => { const node=document.createElementNS('http://www.w3.org/2000/svg',tag); for(const [key,value] of Object.entries(attrs)) node.setAttribute(key,value); return node; };
+    function drawWheel() {
+      svg.replaceChildren();
+      svg.append(el('circle',{cx:300,cy:300,r:289,fill:'#fff',stroke:'#dde5df','stroke-width':2}));
+      for(let i=0;i<12;i++) {
+        const active=state.selected.has(mod(i-state.root));
+        const root=i===state.root;
+        svg.append(el('path',{d:polygon(231,285,angle(i-.5),angle(i+.5)),fill:active?(root?'#faeae5':'#e5f2eb'):(i%2?'#f7f9f7':'#fff'),stroke:'#dde5df','stroke-width':1}));
+        const p=point(258,angle(i));
+        const label=el('text',{x:p.x,y:p.y,'text-anchor':'middle','dominant-baseline':'central',class:`outer-label ${active?'active':''} ${root?'root':''}`});
+        label.textContent=names[state.notation][i]; svg.append(label);
+      }
+      svg.append(el('circle',{cx:300,cy:300,r:217,fill:'#f7faf7',stroke:'#dce7df','stroke-width':2}));
+      for(let i=0;i<12;i++) {
+        const absolute=mod(state.root+i), isOn=state.selected.has(i);
+        const sector=el('path',{d:polygon(127,209,angle(absolute-.5),angle(absolute+.5)),class:`sector ${isOn?'selected':''} ${i===0?'root':''}`,'data-interval':i,'aria-label':`${semitoneNames[i]} ${isOn?'已选':'未选'}`});
+        svg.append(sector);
+        if(isOn){
+          const tip=point(229,angle(absolute)), left=point(199,angle(absolute-.09)), right=point(199,angle(absolute+.09));
+          svg.append(el('path',{d:`M ${tip.x} ${tip.y} L ${left.x} ${left.y} L ${right.x} ${right.y} Z`,fill:i===0?'#d2634e':'#176b55','pointer-events':'none'}));
+        }
+        const p=point(169,angle(absolute));
+        const label=el('text',{x:p.x,y:p.y,'text-anchor':'middle','dominant-baseline':'central',class:`interval-label ${isOn?'active':''} ${i===0&&isOn?'root':''}`});
+        label.textContent=intervals[i]; svg.append(label);
+      }
+      svg.append(el('circle',{cx:300,cy:300,r:118,fill:'#fff',stroke:'#dce7df','stroke-width':2,class:'drag-face'}));
+      const tip=point(111,angle(state.root)), baseL=point(88,angle(state.root-.22)), baseR=point(88,angle(state.root+.22));
+      svg.append(el('path',{d:`M ${tip.x} ${tip.y} L ${baseL.x} ${baseL.y} L ${baseR.x} ${baseR.y} Z`,fill:'#d2634e','pointer-events':'none'}));
+      const caption=el('text',{x:300,y:274,'text-anchor':'middle',fill:'#718078','font-size':13,'font-weight':700,'pointer-events':'none'});caption.textContent='根音';svg.append(caption);
+      const rootName=el('text',{x:300,y:322,'text-anchor':'middle',fill:'#182220','font-size':45,'font-weight':800,'pointer-events':'none'});rootName.textContent=names[state.notation][state.root];svg.append(rootName);
+      const dragLabel=el('text',{x:300,y:349,'text-anchor':'middle',fill:'#8b9990','font-size':11,'font-weight':700,'pointer-events':'none'});dragLabel.textContent='拖动旋转';svg.append(dragLabel);
+      $('degree').textContent=`${state.root*30}°`;
+    }
+    function renderControls() {
+      $('rootSelect').replaceChildren(...names[state.notation].map((name,i)=>{const opt=document.createElement('option');opt.value=i;opt.textContent=name;return opt;}));
+      $('rootSelect').value=state.root;
+      $('scaleTab').classList.toggle('on',state.mode==='scale'); $('chordTab').classList.toggle('on',state.mode==='chord');
+      $('scaleTab').setAttribute('aria-selected',state.mode==='scale'); $('chordTab').setAttribute('aria-selected',state.mode==='chord');
+      $('presets').replaceChildren(...presets[state.mode].map(item=>{const btn=document.createElement('button');btn.type='button';btn.className=`preset ${state.preset===item.name?'on':''}`;btn.innerHTML=`${item.name}<small>${item.detail}</small>`;btn.addEventListener('click',()=>{state.preset=item.name;state.selected=new Set(item.steps);render();});return btn;}));
+      $('intervals').replaceChildren(...intervals.map((name,i)=>{const btn=document.createElement('button');btn.type='button';btn.className=`interval-btn ${state.selected.has(i)?'on':''} ${i===0?'root':''}`;btn.setAttribute('aria-pressed',String(state.selected.has(i)));btn.title=semitoneNames[i];btn.innerHTML=`<strong>${name}</strong><span>${i} 半音</span>`;btn.addEventListener('click',()=>toggle(i));return btn;}));
+    }
+    function renderReadout() {
+      const steps=[...state.selected].sort((a,b)=>a-b);
+      $('notes').replaceChildren(...steps.map(step=>{const span=document.createElement('span');span.className=`note-pill ${step===0?'root':''}`;span.textContent=names[state.notation][mod(state.root+step)];return span;}));
+    }
+    function renderFretboard() {
+      const board=$('fretboard');board.replaceChildren();
+      const heading=document.createElement('div');heading.className='fret-row heading';
+      for(let fret=0;fret<=12;fret++){const h=document.createElement('span');h.className='fret-cell';h.textContent=fret;heading.append(h);}board.append(heading);
+      [['e',4],['B',11],['G',7],['D',2],['A',9],['E',4]].forEach(([string,open],rowIndex)=>{
+        const row=document.createElement('div');row.className='fret-row';row.setAttribute('aria-label',`第 ${rowIndex+1} 弦，${string} 调弦`);
+        for(let fret=0;fret<=12;fret++){
+          const cell=document.createElement('span');cell.className='fret-cell';
+          const pitch=mod(open+fret), delta=mod(pitch-state.root), note=document.createElement('span');
+          note.className=`fret-note ${state.selected.has(delta)?(delta===0?'root':''):'muted'}`;
+          note.textContent=state.selected.has(delta)?names[state.notation][pitch]:'';
+          if(state.selected.has(delta)) note.title=`${string} 弦第 ${fret} 品：${names[state.notation][pitch]}（${semitoneNames[delta]}）`;
+          else note.setAttribute('aria-hidden','true');
+          cell.append(note);row.append(cell);
+        } board.append(row);
+      });
+    }
+    function render(){drawWheel();renderControls();renderReadout();renderFretboard();}
+    function toggle(i){if(state.selected.has(i))state.selected.delete(i);else state.selected.add(i);state.preset='';render();}
+    function setRoot(n){state.root=mod(n);render();}
+    $('rootSelect').addEventListener('change',e=>setRoot(Number(e.target.value)));
+    $('notation').addEventListener('change',e=>{state.notation=e.target.value;render();});
+    $('scaleTab').addEventListener('click',()=>{state.mode='scale';renderControls();});
+    $('chordTab').addEventListener('click',()=>{state.mode='chord';renderControls();});
+    $('turnLeft').addEventListener('click',()=>setRoot(state.root-1));
+    $('turnRight').addEventListener('click',()=>setRoot(state.root+1));
+    svg.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();setRoot(state.root+(e.key==='ArrowRight'?1:-1));}});
+    let drag=null;
+    const position=e=>{const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());};
+    const getAngle=e=>{const p=position(e);return Math.atan2(p.x-300,300-p.y);};
+    svg.addEventListener('pointerdown',e=>{
+      const p=position(e), radius=Math.hypot(p.x-300,p.y-300);
+      if(radius>216)return;
+      drag={start:getAngle(e),root:state.root,moved:false,interval:e.target.closest('[data-interval]')?.dataset.interval};
+      svg.setPointerCapture(e.pointerId);
+    });
+    svg.addEventListener('pointermove',e=>{
+      if(!drag)return;
+      let change=getAngle(e)-drag.start;
+      if(change>Math.PI)change-=2*Math.PI;if(change< -Math.PI)change+=2*Math.PI;
+      if(Math.abs(change)>0.08)drag.moved=true;
+      if(drag.moved){svg.classList.add('dragging');const next=mod(drag.root+Math.round(change/(Math.PI/6)));if(next!==state.root)setRoot(next);}
+    });
+    svg.addEventListener('pointerup',e=>{if(!drag)return;const clicked=drag.interval, moved=drag.moved;drag=null;svg.classList.remove('dragging');if(!moved&&clicked!==undefined)toggle(Number(clicked));});
+    svg.addEventListener('pointercancel',()=>{drag=null;svg.classList.remove('dragging');});
+    render();
+  </script>
+</body>
+</html>
