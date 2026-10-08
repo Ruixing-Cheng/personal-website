@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Second Brain",
+  title: "Ruixing Cheng's personal website",
   description: "A private workspace for useful files, resources and tools.",
 };
 
