@@ -1,1 +1,1 @@
-[Ruixing Cheng's personal website](personal-website-hpia51tm9-ruixing-cheng.vercel.app)
+[Ruixing Cheng's personal website](https://personal-website-hpia51tm9-ruixing-cheng.vercel.app)
