@@ -30,7 +30,7 @@ jobs:
       - run: pnpm build
         env:
           NEXT_PUBLIC_PUBLIC_SITE: "true"
-          NEXT_PUBLIC_BASE_PATH: /second-brain
+          NEXT_PUBLIC_BASE_PATH: /personal-website
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .next-public
